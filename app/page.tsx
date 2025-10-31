@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { StarRating } from "@/components/star-rating"
 import { ReviewCarousel } from "@/components/review-carousel"
 import { Card } from "@/components/ui/card"
@@ -10,14 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import confetti from "canvas-confetti"
-
-interface Review {
-  id: string
-  nickname: string
-  rating: number
-  comment: string
-  timestamp: number
-}
+import { reviewsAPI, type Review } from "@/lib/api/reviews"
 
 export default function JuveboxdPage() {
   const [rating, setRating] = useState(0)
@@ -26,8 +19,28 @@ export default function JuveboxdPage() {
   const [submitted, setSubmitted] = useState(false)
   const [reviews, setReviews] = useState<Review[]>([])
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch reviews on component mount
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        setIsLoadingReviews(true)
+        const data = await reviewsAPI.getAllReviews()
+        setReviews(data.sort((a, b) => b.timestamp - a.timestamp))
+      } catch (err) {
+        console.error("Failed to fetch reviews:", err)
+        // If API fails, continue with empty reviews array
+      } finally {
+        setIsLoadingReviews(false)
+      }
+    }
+
+    fetchReviews()
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!name.trim()) {
@@ -40,30 +53,38 @@ export default function JuveboxdPage() {
       return
     }
 
-    const newReview: Review = {
-      id: Date.now().toString(),
-      nickname: name.trim(),
-      rating,
-      comment,
-      timestamp: Date.now(),
-    }
-
-    setReviews([newReview, ...reviews])
-    setSubmitted(true)
+    setIsLoading(true)
     setError("")
 
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-    })
+    try {
+      const newReview = await reviewsAPI.createReview({
+        nickname: name.trim(),
+        rating,
+        comment,
+      })
 
-    setTimeout(() => {
-      setRating(0)
-      setName("")
-      setComment("")
-      setSubmitted(false)
-    }, 3000)
+      setReviews([newReview, ...reviews])
+      setSubmitted(true)
+
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+      })
+
+      setTimeout(() => {
+        setRating(0)
+        setName("")
+        setComment("")
+        setSubmitted(false)
+      }, 3000)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erro ao salvar review"
+      setError(errorMessage)
+      console.error("Failed to create review:", err)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -130,20 +151,25 @@ export default function JuveboxdPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-[#00ac1c] hover:bg-[#00ac1c]/90 text-white font-bold py-6 rounded-xl text-lg transition-all hover:shadow-lg hover:shadow-[#00ac1c]/50 hover:scale-[1.02]"
+                disabled={isLoading}
+                className="w-full bg-[#00ac1c] hover:bg-[#00ac1c]/90 text-white font-bold py-6 rounded-xl text-lg transition-all hover:shadow-lg hover:shadow-[#00ac1c]/50 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                Salvar
+                {isLoading ? "Salvando..." : "Salvar"}
               </Button>
             </form>
           )}
         </Card>
 
-        {reviews.length > 0 && (
+        {isLoadingReviews ? (
+          <div className="mt-12 text-center">
+            <p className="text-white/60">Carregando reviews...</p>
+          </div>
+        ) : reviews.length > 0 ? (
           <div className="mt-12">
             <h2 className="text-2xl font-bold mb-6 text-center">Reviews Recentes</h2>
             <ReviewCarousel reviews={reviews} />
           </div>
-        )}
+        ) : null}
       </main>
 
       {/* Footer */}
