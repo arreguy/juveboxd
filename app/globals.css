@@ -220,8 +220,14 @@
       0 0,
       0 0,
       0 0;
-    background-attachment: fixed;
     animation: mesh-move 20s ease-in-out infinite;
+  }
+
+  /* Fixed background for desktop only - mobile browsers don't support it well */
+  @media (min-width: 768px) {
+    body {
+      background-attachment: fixed;
+    }
   }
 
   @keyframes mesh-move {
