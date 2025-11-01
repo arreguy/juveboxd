@@ -135,6 +135,8 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
+    /* Force dark background on html to prevent white showing on mobile */
+    background: #060606;
   }
   body {
     @apply text-foreground;
@@ -146,8 +148,13 @@
     overflow-x: hidden;
     overscroll-behavior-y: none;
     -webkit-overflow-scrolling: touch;
+    /* Ensure minimum height for mobile browsers */
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile */
 
     /* Modern animated mesh gradient background */
+    /* Fallback solid dark background */
+    background-color: #060606;
     background:
       /* Animated gradient orbs */
       radial-gradient(
