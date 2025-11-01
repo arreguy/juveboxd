@@ -137,7 +137,7 @@
     overflow: hidden;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
     /* Allow scrolling within body */
     position: fixed;
     width: 100%;
