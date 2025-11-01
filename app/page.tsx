@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { StarRating } from "@/components/star-rating"
-import { ReviewCarousel } from "@/components/review-carousel"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -22,16 +21,16 @@ export default function JuveboxdPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingReviews, setIsLoadingReviews] = useState(true)
 
-  // Fetch reviews on component mount
+  // Fetch user's reviews from localStorage on component mount
   useEffect(() => {
     const fetchReviews = async () => {
       try {
         setIsLoadingReviews(true)
-        const data = await reviewsAPI.getAllReviews()
+        const data = await reviewsAPI.getUserReviews()
         setReviews(data.sort((a, b) => b.timestamp - a.timestamp))
       } catch (err) {
         console.error("Failed to fetch reviews:", err)
-        // If API fails, continue with empty reviews array
+        setReviews([])
       } finally {
         setIsLoadingReviews(false)
       }
@@ -162,12 +161,71 @@ export default function JuveboxdPage() {
 
         {isLoadingReviews ? (
           <div className="mt-12 text-center">
-            <p className="text-white/60">Carregando reviews...</p>
+            <p className="text-white/60">Carregando seus reviews...</p>
           </div>
         ) : reviews.length > 0 ? (
           <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6 text-center">Reviews Recentes</h2>
-            <ReviewCarousel reviews={reviews} />
+            <h2 className="text-2xl font-bold mb-6 text-center">Seus Reviews</h2>
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <Card
+                  key={review.id}
+                  className="bg-white/5 backdrop-blur-xl border-white/10 p-6 rounded-xl shadow-lg hover:bg-white/10 transition-all"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-semibold text-lg text-white">{review.nickname}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center">
+                          {[...Array(5)].map((_, i) => (
+                            <span
+                              key={i}
+                              className={`text-xl ${
+                                i < Math.floor(review.rating)
+                                  ? "text-[#00e054]"
+                                  : i < review.rating
+                                  ? "text-[#00e054] opacity-50"
+                                  : "text-white/20"
+                              }`}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                        <span className="text-[#00e054] font-bold">{review.rating.toFixed(1)}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (confirm("Deseja realmente excluir este review?")) {
+                          try {
+                            await reviewsAPI.deleteReview(review.id)
+                            setReviews(reviews.filter((r) => r.id !== review.id))
+                          } catch (err) {
+                            console.error("Failed to delete review:", err)
+                          }
+                        }
+                      }}
+                      className="text-red-400 hover:text-red-300 transition-colors text-sm"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                  {review.comment && (
+                    <p className="text-white/80 leading-relaxed">{review.comment}</p>
+                  )}
+                  <p className="text-white/40 text-sm mt-3">
+                    {new Date(review.timestamp).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </Card>
+              ))}
+            </div>
           </div>
         ) : null}
       </main>
