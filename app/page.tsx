@@ -87,7 +87,7 @@ export default function JuveboxdPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
+    <div className="min-h-screen text-white">
       {/* Header */}
       <header className="py-12 text-center border-b border-white/10">
         <h1 className="text-6xl md:text-7xl font-bold tracking-tight mb-4 text-balance text-[#fbfb1f]">JUVEBOXD</h1>
