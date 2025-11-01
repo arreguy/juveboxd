@@ -119,7 +119,24 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    /* Prevent overscroll bounce effect in Mobile Safari */
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
   body {
     @apply bg-background text-foreground;
+    /* Allow scrolling within body */
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
   }
 }
